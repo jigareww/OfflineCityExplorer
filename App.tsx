@@ -11,9 +11,11 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { APP_NAME } from '@/constants';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
+  console.log(`Starting ${APP_NAME}...`);
 
   return (
     <SafeAreaProvider>

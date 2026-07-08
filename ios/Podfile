@@ -17,6 +17,9 @@ end
 target 'OfflineCityExplorer' do
   config = use_native_modules!
 
+  # Link local native TurboModule implementations
+  pod 'AppNativeModules', :path => '.'
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
