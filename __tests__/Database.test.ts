@@ -7,12 +7,19 @@ import { FavoritesRepository } from '@/repositories/FavoritesRepository';
 // Setup Mocks
 const mockExecuteSync = jest.fn();
 const mockExecute = jest.fn();
-const mockTransaction = jest.fn(callback => {
+const mockTransaction = jest.fn((callback) => {
   const tx = {
     execute: jest.fn(() => Promise.resolve({ rows: [], rowsAffected: 0 })),
   };
   return callback(tx).then(() => Promise.resolve());
 });
+
+jest.mock('@/native/NativeDeviceStatus', () => ({
+  __esModule: true,
+  default: {
+    getDeviceInfo: jest.fn(() => Promise.resolve({ networkStatus: 'wifi' })),
+  },
+}));
 
 jest.mock('@op-engineering/op-sqlite', () => {
   return {
@@ -27,11 +34,11 @@ jest.mock('@op-engineering/op-sqlite', () => {
 describe('Database & Repositories Unit Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
+    
     // Default mock response for user_version check
     mockExecute.mockResolvedValue({
       rows: [{ user_version: 1 }],
-      rowsAffected: 0,
+      rowsAffected: 0
     });
   });
 
@@ -39,7 +46,7 @@ describe('Database & Repositories Unit Tests', () => {
     test('initializeDatabase skips creation when schema version is up to date', async () => {
       mockExecute.mockResolvedValue({
         rows: [{ user_version: 1 }],
-        rowsAffected: 0,
+        rowsAffected: 0
       });
 
       await initializeDatabase();
@@ -51,7 +58,7 @@ describe('Database & Repositories Unit Tests', () => {
     test('initializeDatabase creates tables when user_version is 0', async () => {
       mockExecute.mockResolvedValue({
         rows: [{ user_version: 0 }],
-        rowsAffected: 0,
+        rowsAffected: 0
       });
 
       await initializeDatabase();
@@ -64,13 +71,7 @@ describe('Database & Repositories Unit Tests', () => {
   describe('CityRepository', () => {
     test('saveCities triggers transaction with correct parameters', async () => {
       const cities = [
-        {
-          id: 'london:uk',
-          name: 'London',
-          country: 'uk',
-          latitude: 51.5,
-          longitude: -0.1,
-        },
+        { id: 'london:uk', name: 'London', country: 'uk', latitude: 51.5, longitude: -0.1 }
       ];
 
       await CityRepository.saveCities(cities);
@@ -80,8 +81,10 @@ describe('Database & Repositories Unit Tests', () => {
 
     test('searchCities executes SELECT query with correct parameters', async () => {
       mockExecute.mockResolvedValue({
-        rows: [{ id: 'london:uk', name: 'London', country: 'uk' }],
-        rowsAffected: 1,
+        rows: [
+          { id: 'london:uk', name: 'London', country: 'uk' }
+        ],
+        rowsAffected: 1
       });
 
       const results = await CityRepository.searchCities('Lon', 10, 0);
@@ -90,7 +93,7 @@ describe('Database & Repositories Unit Tests', () => {
       expect(results[0].name).toBe('London');
       expect(mockExecute).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM cities WHERE name LIKE ?'),
-        ['Lon%', 10, 0],
+        ['Lon%', 10, 0]
       );
     });
   });
@@ -105,10 +108,10 @@ describe('Database & Repositories Unit Tests', () => {
             humidity: 60,
             wind_speed: 4.5,
             weather_code: 1,
-            cached_at: 1700000000,
-          },
+            cached_at: 1700000000
+          }
         ],
-        rowsAffected: 1,
+        rowsAffected: 1
       });
 
       const weather = await WeatherRepository.getCachedWeather('london:uk');
@@ -124,7 +127,7 @@ describe('Database & Repositories Unit Tests', () => {
         humidity: 80,
         windSpeed: 2.0,
         weatherCode: 3,
-        cachedAt: Date.now(),
+        cachedAt: Date.now()
       };
 
       await WeatherRepository.saveWeather('london:uk', weather);
@@ -148,10 +151,10 @@ describe('Database & Repositories Unit Tests', () => {
             action_type: 'ADD_FAVORITE',
             payload: JSON.stringify({ cityId: 'london:uk', timestamp: 12345 }),
             timestamp: 12345,
-            retry_count: 0,
-          },
+            retry_count: 0
+          }
         ],
-        rowsAffected: 1,
+        rowsAffected: 1
       });
 
       const mutations = await FavoritesRepository.getPendingMutations();

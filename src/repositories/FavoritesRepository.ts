@@ -15,11 +15,48 @@ interface DBMutation {
   retry_count: number;
 }
 
+export interface FavoriteCityWithWeather {
+  id: string;
+  name: string;
+  country: string;
+  latitude?: number;
+  longitude?: number;
+  temperature?: number;
+  weatherCode?: number;
+}
+
 export class FavoritesRepository {
   static async getFavorites(): Promise<string[]> {
     const sql = 'SELECT city_id FROM favorites WHERE is_favorite = 1;';
     const result = await executeQuery<{ city_id: string }>(sql);
     return result.map(row => row.city_id);
+  }
+
+  static async getFavoritesWithWeather(): Promise<FavoriteCityWithWeather[]> {
+    const sql = `SELECT c.id, c.name, c.country, c.latitude, c.longitude, w.temperature, w.weather_code 
+                 FROM favorites f
+                 INNER JOIN cities c ON f.city_id = c.id
+                 LEFT JOIN weather w ON f.city_id = w.city_id
+                 WHERE f.is_favorite = 1;`;
+    const result = await executeQuery<{
+      id: string;
+      name: string;
+      country: string;
+      latitude: number | null;
+      longitude: number | null;
+      temperature: number | null;
+      weather_code: number | null;
+    }>(sql);
+
+    return result.map(row => ({
+      id: row.id,
+      name: row.name,
+      country: row.country,
+      latitude: row.latitude ?? undefined,
+      longitude: row.longitude ?? undefined,
+      temperature: row.temperature ?? undefined,
+      weatherCode: row.weather_code ?? undefined,
+    }));
   }
 
   static async isFavorite(cityId: string): Promise<boolean> {
